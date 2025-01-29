@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage('SCM checkout'){
         	steps {
-			git "https://github.com/satishlesnar/appjenkins.git"
+			git "https://github.com/satishlesnar/appjenkins.git",branch: "main"
             	}
 	}
 	stage('Build deployment image'){
