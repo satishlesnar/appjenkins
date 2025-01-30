@@ -1,12 +1,10 @@
-ports = [ 81, 82, 83]
-
 pipeline {
-    agent any  // This will run on any available node
+    agent any
 
     parameters {
         string(name: 'serverIP', defaultValue: 'None', description: 'Enter target Host IP ')
         string(name: 'targetHost', defaultValue: 'None', description: 'Enter target host for deployment ')
-        string(name: 'dockerUser', defaultValue: 'None', description: 'Enter Docker user name ')   
+        string(name: 'dockerUser', defaultValue: 'None', description: 'Enter Docker user name ')
     }
 
     environment {
@@ -16,7 +14,7 @@ pipeline {
     stages {
         stage('SCM checkout') {
             steps {
-                git url: "https://github.com/satishlesnar/appjenkins.git", branch: "main"
+                git credentialsId: 'github-creds', url: 'https://github.com/satishlesnar/appjenkins.git', branch: 'main'
             }
         }
 
@@ -28,5 +26,39 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                sh "echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login --username ${dockerUser} --password-stdin"
-                sh "sudo docker push ${dockerUser}/devo
+                script {
+                    if (dockerUser != 'None') {
+                        sh "echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login --username ${dockerUser} --password-stdin"
+                        sh "sudo docker push ${dockerUser}/devopsdemo:latest"
+                    } else {
+                        error "Docker username not provided."
+                    }
+                }
+            }
+        }
+
+        stage('Delete old and Deploy new version on website') {
+            steps {
+                sh '''
+                    sudo docker run -tid -p 81:80 ${dockerUser}/devopsdemo:latest
+                    sudo docker run -tid -p 82:80 ${dockerUser}/devopsdemo:latest
+                    sudo docker run -tid -p 83:80 ${dockerUser}/devopsdemo:latest
+                '''
+            }
+        }
+
+        stage('Test the website') {
+            steps {
+                test_web(ports, serverIP)
+            }
+        }
+    }
+}
+
+def test_web(ports, serverIP) {
+    script {
+        ports.each { entry ->
+            sh "curl -I http://${serverIP}:${entry}"
+        }
+    }
+}
