@@ -20,7 +20,11 @@ pipeline {
 
         stage('Build deployment image') {
             steps {
-                sh "sudo docker build /home/ubuntu/jenkins/workspace/${JOB_NAME} -t ${dockerUser}/devopsdemo --no-cache"
+                script {
+                    // Docker build context should be the Jenkins workspace
+                    def buildContext = "${WORKSPACE}"
+                    sh "sudo docker build ${buildContext} -t ${dockerUser}/devopsdemo --no-cache"
+                }
             }
         }
 
@@ -28,6 +32,7 @@ pipeline {
             steps {
                 script {
                     if (dockerUser != 'None') {
+                        // Login to Docker Hub using provided credentials
                         sh "echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login --username ${dockerUser} --password-stdin"
                         sh "sudo docker push ${dockerUser}/devopsdemo:latest"
                     } else {
@@ -39,17 +44,23 @@ pipeline {
 
         stage('Delete old and Deploy new version on website') {
             steps {
-                sh '''
-                    sudo docker run -tid -p 81:80 ${dockerUser}/devopsdemo:latest
-                    sudo docker run -tid -p 82:80 ${dockerUser}/devopsdemo:latest
-                    sudo docker run -tid -p 83:80 ${dockerUser}/devopsdemo:latest
-                '''
+                script {
+                    // Define ports and deploy the Docker containers
+                    def ports = ['81', '82', '83']
+                    ports.each { port ->
+                        sh "sudo docker run -tid -p ${port}:80 ${dockerUser}/devopsdemo:latest"
+                    }
+                }
             }
         }
 
         stage('Test the website') {
             steps {
-                test_web(ports, serverIP)
+                script {
+                    // Define the ports and the server IP to test the website
+                    def ports = ['81', '82', '83']
+                    test_web(ports, params.serverIP)
+                }
             }
         }
     }
