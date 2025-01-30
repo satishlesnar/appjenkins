@@ -21,7 +21,10 @@ pipeline {
         stage('Build deployment image') {
             steps {
                 script {
-                    // Docker build context should be the Jenkins workspace
+                    // Add diagnostic command to check the directory contents
+                    sh "ls -la /var/lib/jenkins/workspace/jenkins-pipeline_main"
+                    
+                    // Build deployment image
                     def buildContext = "${WORKSPACE}"
                     sh "sudo docker build ${buildContext} -t ${dockerUser}/devopsdemo --no-cache"
                 }
