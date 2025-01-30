@@ -16,12 +16,17 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Install Python and pip locally (without sudo)
+                    // Install Python and Poetry without sudo
                     sh '''
                     curl -sS https://install.python-poetry.org | python3 -
                     export PATH="$HOME/.local/bin:$PATH"
+
+                    # Ensure pip is available
+                    python3 -m ensurepip --upgrade
                     pip install --upgrade pip
-                    pip install -r requirements.txt
+
+                    # Install dependencies using poetry (for handling requirements)
+                    poetry install
                     '''
                 }
             }
@@ -30,8 +35,11 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    // Run your tests here (if any)
-                    sh 'pytest'
+                    // Run your tests here using Poetry
+                    sh '''
+                    # Activate the poetry environment and run tests
+                    poetry run pytest
+                    '''
                 }
             }
         }
@@ -39,14 +47,14 @@ pipeline {
         stage('Deploy to Google App Engine') {
             steps {
                 script {
-                    // Authenticate with Google Cloud
-                    sh 'gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}'
+                    // Authenticate with Google Cloud using the service account
+                    sh '''
+                    gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                    gcloud config set project $PROJECT_ID
 
-                    // Set project ID
-                    sh 'gcloud config set project $PROJECT_ID'
-
-                    // Deploy to App Engine
-                    sh 'gcloud app browse'
+                    # Deploy to Google App Engine
+                    gcloud app deploy --quiet
+                    '''
                 }
             }
         }
@@ -55,7 +63,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            // Optional: Clean up after the pipeline
+            // Optional: Clean up after the pipeline (e.g., remove temporary files, clean workspace)
         }
 
         success {
