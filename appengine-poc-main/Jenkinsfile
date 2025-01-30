@@ -16,16 +16,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Install Python and Poetry without sudo
+                    // Create a virtual environment and activate it
                     sh '''
+                    python3 -m venv /var/lib/jenkins/venv
+                    source /var/lib/jenkins/venv/bin/activate
+
+                    # Upgrade pip within the virtual environment
+                    pip install --upgrade pip
+
+                    # Install dependencies using Poetry (make sure requirements.txt exists)
                     curl -sS https://install.python-poetry.org | python3 -
                     export PATH="$HOME/.local/bin:$PATH"
 
-                    # Ensure pip is available
-                    python3 -m ensurepip --upgrade
-                    pip install --upgrade pip
-
-                    # Install dependencies using poetry (for handling requirements)
                     poetry install
                     '''
                 }
@@ -35,9 +37,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    // Run your tests here using Poetry
+                    // Run tests inside the Poetry environment
                     sh '''
-                    # Activate the poetry environment and run tests
+                    source /var/lib/jenkins/venv/bin/activate
                     poetry run pytest
                     '''
                 }
