@@ -21,12 +21,11 @@ pipeline {
         stage('Build deployment image') {
             steps {
                 script {
-                    // Add diagnostic command to check the directory contents
-                    sh "ls -la /var/lib/jenkins/workspace/jenkins-pipeline_main"
-                    
-                    // Build deployment image
-                    def buildContext = "${WORKSPACE}"
-                    sh "sudo docker build ${buildContext} -t ${dockerUser}/devopsdemo --no-cache"
+                    // Check the content of the subdirectory
+                    sh "ls -la /var/lib/jenkins/workspace/jenkins-pipeline_main/jenkins-terraform-docker-webinar-master"
+
+                    // Assuming the Dockerfile is inside the 'jenkins-terraform-docker-webinar-master' directory
+                    sh "sudo docker build /var/lib/jenkins/workspace/jenkins-pipeline_main/jenkins-terraform-docker-webinar-master -t ${dockerUser}/devopsdemo --no-cache"
                 }
             }
         }
