@@ -2,4 +2,4 @@ runtime: java17
 env: standard
 
 env_variables:
-  GOOGLE_CLOUD_PROJECT: bunny-project-444905
+  GOOGLE_CLOUD_PROJECT: sodium-ceremony-449007-j6
