@@ -44,13 +44,13 @@ pipeline {
             }
         }
 
-        // New Stage: Stop and Remove Old Containers
         stage('Stop and Remove Old Containers') {
             steps {
                 script {
-                    // Stop and remove any containers running the previous image
+                    // Get the container IDs of running containers from the old image
                     def containers = sh(script: "sudo docker ps -q --filter 'ancestor=${dockerUser}/devopsdemo'", returnStdout: true).trim().split('\n')
-                    if (containers) {
+                    
+                    if (containers.size() > 0 && containers[0]) {
                         containers.each { container ->
                             echo "Stopping and removing container: ${container}"
                             sh "sudo docker stop ${container}"
