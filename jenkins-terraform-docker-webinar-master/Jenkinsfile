@@ -44,6 +44,25 @@ pipeline {
             }
         }
 
+        // New Stage: Stop and Remove Old Containers
+        stage('Stop and Remove Old Containers') {
+            steps {
+                script {
+                    // Stop and remove any containers running the previous image
+                    def containers = sh(script: "sudo docker ps -q --filter 'ancestor=${dockerUser}/devopsdemo'", returnStdout: true).trim().split('\n')
+                    if (containers) {
+                        containers.each { container ->
+                            echo "Stopping and removing container: ${container}"
+                            sh "sudo docker stop ${container}"
+                            sh "sudo docker rm ${container}"
+                        }
+                    } else {
+                        echo "No old containers found for ${dockerUser}/devopsdemo."
+                    }
+                }
+            }
+        }
+
         stage('Delete old and Deploy new version on website') {
             steps {
                 script {
